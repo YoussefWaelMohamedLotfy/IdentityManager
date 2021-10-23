@@ -1,11 +1,15 @@
 using IdentityManager.Data;
+using IdentityManager.Models;
+using IdentityManager.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 
 namespace IdentityManager
 {
@@ -22,7 +26,26 @@ namespace IdentityManager
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddIdentity<IdentityUser, IdentityRole>().AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddIdentity<IdentityUser, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+
+            services.Configure<IdentityOptions>(options =>
+            {
+                options.Password.RequiredLength = 5;
+                options.Password.RequireLowercase = true;
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromSeconds(30);
+                options.Lockout.MaxFailedAccessAttempts = 5;
+                options.SignIn.RequireConfirmedAccount = true;
+            });
+
+            services.AddTransient<IEmailSender, SendGridEmailService>();
+            services.Configure<SendGridOptions>(options =>
+            {
+                options.ApiKey = Configuration["SendGrid:ApiKey"];
+                options.SenderEmail = Configuration["SendGrid:SenderEmail"];
+                options.SenderName = Configuration["SendGrid:SenderName"];
+            });
 
             services.AddControllersWithViews();
         }
