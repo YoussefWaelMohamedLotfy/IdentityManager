@@ -3,6 +3,7 @@ using IdentityManager.Models;
 using IdentityManager.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -37,6 +38,11 @@ namespace IdentityManager
                 options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromSeconds(30);
                 options.Lockout.MaxFailedAccessAttempts = 5;
                 options.SignIn.RequireConfirmedAccount = true;
+            });
+
+            services.ConfigureApplicationCookie(opt =>
+            {
+                opt.AccessDeniedPath = new PathString("/Home/AccessDenied");
             });
 
             services.AddTransient<IEmailSender, SendGridEmailService>();
