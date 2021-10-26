@@ -40,19 +40,18 @@
                     <td>
                         <div class="text-center">
                             <form asp-action="Delete" asp-route-userId="@item.Id">
-                                <a asp-action="Edit" asp-route-userId="@item.Id" class="btn btn-info text-white" style="cursor:pointer">
-                                    Edit
-                                </a>
+                                <a asp-action="Edit" asp-route-userId="@item.Id" class="btn btn-info text-white" style="cursor:pointer">Edit</a>
+                                <a asp-action="ManageUserClaims" asp-route-userId="@item.Id" class="btn btn-primary text-white" style="cursor:pointer">Claims</a>
                                 @if (item.LockoutEnd == null || item.LockoutEnd < DateTime.Now)
                                 {
                                     // We want to show them the option to lock
                                     <button asp-action="LockUnlock" asp-route-userId="@item.Id" class="btn btn-success text-white" style="cursor:pointer">
-                                        <span>&nbsp; Lock &nbsp;</span>
-                                    </button> 
+                                        <span>Lock</span>
+                                    </button>
                                 }
                                 else
                                 {
-                                     // We want to show them the option to unlock
+                                    // We want to show them the option to unlock
                                     <button asp-action="LockUnlock" asp-route-userId="@item.Id" class="btn btn-warning text-white" style="cursor:pointer">
                                         <span>Unlock</span>
                                     </button>
