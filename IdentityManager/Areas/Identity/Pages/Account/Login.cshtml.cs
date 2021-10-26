@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Logging;
+using IdentityManager.Data;
+using System.Security.Claims;
 
 namespace IdentityManager.Areas.Identity.Pages.Account
 {
@@ -20,14 +22,17 @@ namespace IdentityManager.Areas.Identity.Pages.Account
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
         private readonly ILogger<LoginModel> _logger;
+        private readonly ApplicationDbContext _db;
 
-        public LoginModel(SignInManager<IdentityUser> signInManager, 
+        public LoginModel(SignInManager<IdentityUser> signInManager,
             ILogger<LoginModel> logger,
-            UserManager<IdentityUser> userManager)
+            UserManager<IdentityUser> userManager,
+            ApplicationDbContext db)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _logger = logger;
+            _db = db;
         }
 
         [BindProperty]
@@ -84,6 +89,23 @@ namespace IdentityManager.Areas.Identity.Pages.Account
                 var result = await _signInManager.PasswordSignInAsync(Input.Email, Input.Password, Input.RememberMe, lockoutOnFailure: false);
                 if (result.Succeeded)
                 {
+                    var user = _db.ApplicationUsers.FirstOrDefault(u => u.Email.ToLower() == Input.Email.ToLower());
+                    var claim = await _userManager.GetClaimsAsync(user);
+
+                    if (claim.Count > 0)
+                    {
+                        try
+                        {
+                            await _userManager.RemoveClaimAsync(user, claim.FirstOrDefault(u => u.Type == "FirstName"));
+                        }
+                        catch (Exception)
+                        {
+
+                        }
+                    }
+                    
+                    await _userManager.AddClaimAsync(user, new Claim("FirstName", user.Name));
+
                     _logger.LogInformation("User logged in.");
                     return LocalRedirect(returnUrl);
                 }

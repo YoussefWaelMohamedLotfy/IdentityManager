@@ -79,7 +79,7 @@ namespace IdentityManager.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var user = new ApplicationUser() { UserName = model.Email, Email = model.Email, Name = model.Name };
+            var user = new ApplicationUser() { UserName = model.Email, Email = model.Email, Name = model.Name, DateCreated = DateTime.Now };
             var result = await _userManager.CreateAsync(user, model.Password);
 
             if (result.Succeeded)
@@ -317,7 +317,7 @@ namespace IdentityManager.Controllers
                 if (info == null)
                     return View("Error");
 
-                var user = new ApplicationUser { UserName = model.Email, Email = model.Email, Name = model.Name };
+                var user = new ApplicationUser { UserName = model.Email, Email = model.Email, Name = model.Name, DateCreated = DateTime.Now };
                 var result = await _userManager.CreateAsync(user);
 
                 if (result.Succeeded)

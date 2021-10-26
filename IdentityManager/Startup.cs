@@ -1,9 +1,10 @@
+using IdentityManager.Authorize;
 using IdentityManager.Data;
 using IdentityManager.Models;
 using IdentityManager.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -29,7 +30,8 @@ namespace IdentityManager
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             services.AddIdentity<IdentityUser, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
-                .AddDefaultTokenProviders();
+                .AddDefaultTokenProviders()
+                .AddDefaultUI();
 
             services.Configure<IdentityOptions>(options =>
             {
@@ -40,10 +42,25 @@ namespace IdentityManager
                 options.SignIn.RequireConfirmedAccount = true;
             });
 
-            services.ConfigureApplicationCookie(opt =>
+            services.AddAuthorization(options =>
             {
-                opt.AccessDeniedPath = new PathString("/Home/AccessDenied");
+                options.AddPolicy("Admin", policy => policy.RequireRole("Admin"));
+                options.AddPolicy("UserAndAdmin", policy => policy.RequireRole("Admin").RequireRole("User"));
+                options.AddPolicy("Admin_CreateAccess", policy => policy.RequireRole("Admin").RequireClaim("create", "True"));
+                options.AddPolicy("Admin_Create_Edit_DeleteAccess", policy => policy.RequireRole("Admin").RequireClaim("create", "True")
+                    .RequireClaim("edit", "True")
+                    .RequireClaim("Delete", "True"));
+
+                options.AddPolicy("Admin_Create_Edit_DeleteAccess_OR_SuperAdmin", policy => policy.RequireAssertion(context => AuthorizeAdminWithClaimsOrSuperAdmin(context)));
+                options.AddPolicy("OnlySuperAdminChecker", policy => policy.Requirements.Add(new OnlySuperAdminChecker()));
+                options.AddPolicy("AdminWithMoreThan1000Days", policy => policy.Requirements.Add(new AdminWithMoreThan1000DaysRequirement(1000)));
+                options.AddPolicy("FirstNameAuth", policy => policy.Requirements.Add(new FirstNameAuthRequirement("billy")));
             });
+
+            //services.ConfigureApplicationCookie(opt =>
+            //{
+            //    opt.AccessDeniedPath = new PathString("/Home/AccessDenied");
+            //});
 
             services.AddTransient<IEmailSender, SendGridEmailService>();
             services.Configure<SendGridOptions>(options =>
@@ -59,6 +76,9 @@ namespace IdentityManager
                 options.AppSecret = "abe6f05cc42cb58fef1e689b54a04011";
             });
 
+            services.AddScoped<IAuthorizationHandler, AdminWithOver1000DaysHandler>();
+            services.AddScoped<IAuthorizationHandler, FirstNameAuthHandler>();
+            services.AddScoped<INumberOfDaysForAccount, NumberOfDaysForAccount>();
             services.AddControllersWithViews();
             services.AddRazorPages();
         }
@@ -90,6 +110,14 @@ namespace IdentityManager
 
                 endpoints.MapRazorPages();
             });
+        }
+
+        private bool AuthorizeAdminWithClaimsOrSuperAdmin(AuthorizationHandlerContext context)
+        {
+            return (context.User.IsInRole("Admin") && context.User.HasClaim(c => c.Type == "Create" && c.Value == "True")
+                        && context.User.HasClaim(c => c.Type == "Edit" && c.Value == "True")
+                        && context.User.HasClaim(c => c.Type == "Delete" && c.Value == "True")
+                    ) || context.User.IsInRole("SuperAdmin");
         }
     }
 }
