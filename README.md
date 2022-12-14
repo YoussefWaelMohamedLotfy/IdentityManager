@@ -1,5 +1,5 @@
 # IdentityManager
-Demonstration of Entity Framework Core Identity Razor Class Library Features in .NET 5
+Demonstration of Entity Framework Core Identity Razor Class Library Features in .NET 7
 
 ## Features
 + Implemented Custom MVC Identity User Management
