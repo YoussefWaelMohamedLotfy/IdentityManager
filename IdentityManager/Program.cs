@@ -12,19 +12,19 @@ var builder = WebApplication.CreateBuilder();
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.Services.Configure<IdentityOptions>(options =>
+{
+    options.Password.RequiredLength = 3;
+    //options.Password.RequireLowercase = true;
+    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromSeconds(30);
+    options.Lockout.MaxFailedAccessAttempts = 5;
+    //options.SignIn.RequireConfirmedAccount = true;
+});
+
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders()
     .AddDefaultUI();
-
-builder.Services.Configure<IdentityOptions>(options =>
-{
-    options.Password.RequiredLength = 5;
-    options.Password.RequireLowercase = true;
-    options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromSeconds(30);
-    options.Lockout.MaxFailedAccessAttempts = 5;
-    options.SignIn.RequireConfirmedAccount = true;
-});
 
 builder.Services.AddAuthorization(options =>
 {
