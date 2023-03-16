@@ -1,7 +1,6 @@
-﻿namespace IdentityManager.Authorize
+﻿namespace IdentityManager.Authorize;
+
+public interface INumberOfDaysForAccount
 {
-    public interface INumberOfDaysForAccount
-    {
-        int Get(string userId);
-    }
+    int Get(string userId);
 }
